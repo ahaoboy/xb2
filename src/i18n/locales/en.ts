@@ -9,7 +9,6 @@ export default {
   },
   characters: {
     title: "Party",
-    add: "Add character",
     name: "Character {{n}}",
     slot: "Slot {{n}}",
     disable: "Disable character",
@@ -20,7 +19,7 @@ export default {
     autoFillHint: "Automatically pick the best element for every empty slot",
     reset: "Reset",
     resetHint: "Clear all elements and locks",
-    hint: "Each character has 3 element slots. Lock a character or slot to exclude it from planning; press + to add a character.",
+    hint: "Each character has 3 element slots. Lock a character or slot to exclude it from planning.",
   },
   elements: {
     fire: "Fire",

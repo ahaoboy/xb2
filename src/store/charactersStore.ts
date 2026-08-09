@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Character, CharacterSlot, ElementId } from "../types";
+import { ELEMENT_IDS, type Character, type CharacterSlot, type ElementId } from "../types";
 import type { SlotFill } from "../utils/autofill";
 
 export const MAX_CHARACTERS = 3;
@@ -8,8 +8,6 @@ export const SLOT_COUNT = 3;
 
 interface CharactersState {
   characters: Character[];
-  /** Adds a character; no-op when the party is full (max 3). */
-  addCharacter: () => void;
   /** Toggles whether the character participates in planning. */
   toggleCharacterDisabled: (id: string) => void;
   setElement: (id: string, slot: number, element: ElementId | null) => void;
@@ -39,15 +37,7 @@ function createCharacter(): Character {
 export const useCharactersStore = create<CharactersState>()(
   persist(
     (set) => ({
-      characters: [createCharacter()],
-      addCharacter: () =>
-        set((state) =>
-          state.characters.length >= MAX_CHARACTERS
-            ? state
-            : {
-                characters: [...state.characters, createCharacter()],
-              },
-        ),
+      characters: Array.from({ length: MAX_CHARACTERS }, () => createCharacter()),
       toggleCharacterDisabled: (id) =>
         set((state) => ({
           characters: state.characters.map((character) =>
@@ -103,6 +93,30 @@ export const useCharactersStore = create<CharactersState>()(
     }),
     {
       name: "xb2-characters",
+      /**
+       * Validates persisted data; falls back to the default state when the
+       * stored shape is missing, invalid, or from an old version.
+       */
+      merge: (persisted, current) => {
+        const stored = (persisted as Partial<CharactersState> | undefined)?.characters;
+        const isValid = (value: unknown): value is Character[] =>
+          Array.isArray(value) &&
+          value.length > 0 &&
+          value.every((character) => {
+            const slots = (character as Partial<Character> | null)?.slots;
+            return (
+              Array.isArray(slots) &&
+              slots.length === SLOT_COUNT &&
+              slots.every(
+                (slot) =>
+                  slot &&
+                  (slot.element === null || ELEMENT_IDS.includes(slot.element)) &&
+                  typeof slot.disabled === "boolean",
+              )
+            );
+          });
+        return isValid(stored) ? { ...current, characters: stored } : current;
+      },
     },
   ),
 );

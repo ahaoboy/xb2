@@ -1,5 +1,4 @@
-import { Box, Button, Chip, Grid, Stack, Tooltip, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import { Button, Chip, Grid, Stack, Tooltip, Typography } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useTranslation } from "react-i18next";
@@ -7,14 +6,12 @@ import { MAX_CHARACTERS, useCharactersStore } from "../../store/charactersStore"
 import { computeAutoFill } from "../../utils/autofill";
 import CharacterCard from "./CharacterCard";
 
-/** Party management: add/remove characters (1-3), each with 3 element slots. */
+/** Party management: 3 fixed characters, each with 3 element slots. */
 export default function CharacterPanel() {
   const { t } = useTranslation();
   const characters = useCharactersStore((state) => state.characters);
-  const addCharacter = useCharactersStore((state) => state.addCharacter);
   const fillSlots = useCharactersStore((state) => state.fillSlots);
   const resetAll = useCharactersStore((state) => state.resetAll);
-  const canAdd = characters.length < MAX_CHARACTERS;
 
   const hasEmptySlots = characters.some(
     (character) =>
@@ -92,40 +89,6 @@ export default function CharacterPanel() {
             <CharacterCard character={character} index={index} />
           </Grid>
         ))}
-        {canAdd ? (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Tooltip title={t("characters.add")}>
-              <Box
-                component="button"
-                type="button"
-                onClick={addCharacter}
-                aria-label={t("characters.add")}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  minHeight: 120,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: "2px dashed",
-                  borderColor: "divider",
-                  borderRadius: 3,
-                  bgcolor: "transparent",
-                  color: "text.secondary",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    color: "primary.main",
-                    bgcolor: "action.hover",
-                  },
-                }}
-              >
-                <AddIcon />
-              </Box>
-            </Tooltip>
-          </Grid>
-        ) : null}
       </Grid>
     </section>
   );

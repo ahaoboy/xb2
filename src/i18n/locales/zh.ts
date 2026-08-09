@@ -9,7 +9,6 @@ export default {
   },
   characters: {
     title: "队伍成员",
-    add: "添加成员",
     name: "成员 {{n}}",
     slot: "槽位 {{n}}",
     disable: "禁用成员",
@@ -20,7 +19,7 @@ export default {
     autoFillHint: "自动为每个空槽位计算最佳属性",
     reset: "重置",
     resetHint: "清除所有属性和锁定",
-    hint: "每名成员有 3 个属性槽位。锁定成员或槽位可将其排除在规划外，点击 + 添加成员。",
+    hint: "每名成员有 3 个属性槽位，可用锁图标禁用成员或槽位以排除在规划之外。",
   },
   elements: {
     fire: "火",
