@@ -1,6 +1,7 @@
-import { Button, Chip, Grid, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Chip, Grid, Stack, Tooltip, Typography } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useTranslation } from "react-i18next";
 import { MAX_CHARACTERS, useCharactersStore } from "../../store/charactersStore";
 import { computeAutoFill } from "../../utils/autofill";
@@ -12,10 +13,18 @@ export default function CharacterPanel() {
   const characters = useCharactersStore((state) => state.characters);
   const addCharacter = useCharactersStore((state) => state.addCharacter);
   const fillSlots = useCharactersStore((state) => state.fillSlots);
+  const resetAll = useCharactersStore((state) => state.resetAll);
   const canAdd = characters.length < MAX_CHARACTERS;
 
-  const hasEmptySlots = characters.some((character) =>
-    character.slots.some((slot) => !slot.disabled && slot.element === null),
+  const hasEmptySlots = characters.some(
+    (character) =>
+      !character.disabled &&
+      character.slots.some((slot) => !slot.disabled && slot.element === null),
+  );
+
+  const isDirty = characters.some(
+    (character) =>
+      character.disabled || character.slots.some((slot) => slot.element !== null || slot.disabled),
   );
 
   const handleAutoFill = () => {
@@ -45,6 +54,19 @@ export default function CharacterPanel() {
           />
         </Stack>
         <Stack direction="row" spacing={1}>
+          <Tooltip title={t("characters.resetHint")}>
+            <span>
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<RestartAltIcon />}
+                onClick={resetAll}
+                disabled={!isDirty}
+              >
+                {t("characters.reset")}
+              </Button>
+            </span>
+          </Tooltip>
           <Tooltip title={t("characters.autoFillHint")}>
             <span>
               <Button
@@ -57,15 +79,6 @@ export default function CharacterPanel() {
               </Button>
             </span>
           </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<PersonAddIcon />}
-            onClick={addCharacter}
-            disabled={!canAdd}
-            title={canAdd ? undefined : t("characters.maxReached")}
-          >
-            {t("characters.add")}
-          </Button>
         </Stack>
       </Stack>
 
@@ -79,6 +92,40 @@ export default function CharacterPanel() {
             <CharacterCard character={character} index={index} />
           </Grid>
         ))}
+        {canAdd ? (
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Tooltip title={t("characters.add")}>
+              <Box
+                component="button"
+                type="button"
+                onClick={addCharacter}
+                aria-label={t("characters.add")}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  minHeight: 120,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px dashed",
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  bgcolor: "transparent",
+                  color: "text.secondary",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    color: "primary.main",
+                    bgcolor: "action.hover",
+                  },
+                }}
+              >
+                <AddIcon />
+              </Box>
+            </Tooltip>
+          </Grid>
+        ) : null}
       </Grid>
     </section>
   );

@@ -46,10 +46,10 @@ export interface CharacterSlot {
   disabled: boolean;
 }
 
-/** A party member with up to 3 blade element slots (slots may be empty or disabled). */
+/** A party member with up to 3 blade element slots. Disabled characters are excluded from planning. */
 export interface Character {
   id: string;
-  name: string;
+  disabled: boolean;
   slots: CharacterSlot[];
 }
 

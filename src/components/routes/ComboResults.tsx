@@ -20,10 +20,7 @@ export default function ComboResults() {
 
   const { roots, names, routeCount } = useMemo(() => {
     const names = new Map(
-      characters.map((character, index) => [
-        character.id,
-        character.name.trim() || t("characters.name", { n: index + 1 }),
-      ]),
+      characters.map((character, index) => [character.id, t("characters.name", { n: index + 1 })]),
     );
     const routes = filterFeasibleRoutes(COMBO_ROUTES, characters, sealFilter);
     const roots = buildComboTree(

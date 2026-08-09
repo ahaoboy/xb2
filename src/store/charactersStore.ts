@@ -10,13 +10,14 @@ interface CharactersState {
   characters: Character[];
   /** Adds a character; no-op when the party is full (max 3). */
   addCharacter: () => void;
-  /** Removes a character; no-op when only one remains. */
-  removeCharacter: (id: string) => void;
-  updateName: (id: string, name: string) => void;
+  /** Toggles whether the character participates in planning. */
+  toggleCharacterDisabled: (id: string) => void;
   setElement: (id: string, slot: number, element: ElementId | null) => void;
   toggleSlotDisabled: (id: string, slot: number) => void;
   /** Applies computed auto-fill results to empty slots. */
   fillSlots: (fills: SlotFill[]) => void;
+  /** Resets all elements and locks, keeping the current character count. */
+  resetAll: () => void;
 }
 
 function createSlots(): CharacterSlot[] {
@@ -26,7 +27,7 @@ function createSlots(): CharacterSlot[] {
 function createCharacter(): Character {
   return {
     id: crypto.randomUUID(),
-    name: "",
+    disabled: false,
     slots: createSlots(),
   };
 }
@@ -47,18 +48,10 @@ export const useCharactersStore = create<CharactersState>()(
                 characters: [...state.characters, createCharacter()],
               },
         ),
-      removeCharacter: (id) =>
-        set((state) =>
-          state.characters.length <= 1
-            ? state
-            : {
-                characters: state.characters.filter((character) => character.id !== id),
-              },
-        ),
-      updateName: (id, name) =>
+      toggleCharacterDisabled: (id) =>
         set((state) => ({
           characters: state.characters.map((character) =>
-            character.id === id ? { ...character, name } : character,
+            character.id === id ? { ...character, disabled: !character.disabled } : character,
           ),
         })),
       setElement: (id, slot, element) =>
@@ -99,33 +92,17 @@ export const useCharactersStore = create<CharactersState>()(
             return { ...character, slots };
           }),
         })),
+      resetAll: () =>
+        set((state) => ({
+          characters: state.characters.map((character) => ({
+            ...character,
+            disabled: false,
+            slots: character.slots.map((slot) => ({ ...slot, element: null, disabled: false })),
+          })),
+        })),
     }),
     {
       name: "xb2-characters",
-      /** Migrates persisted pre-slot data (`elements`) into the new slots shape. */
-      merge: (persisted, current) => {
-        const stored = (persisted as Partial<CharactersState> | undefined)?.characters;
-        return {
-          ...current,
-          ...(persisted as object),
-          characters:
-            stored && stored.length > 0
-              ? stored.map((character) => {
-                  const legacy = character as Character & {
-                    elements?: (ElementId | null)[];
-                  };
-                  return {
-                    ...character,
-                    slots:
-                      legacy.slots?.length === SLOT_COUNT
-                        ? legacy.slots
-                        : (legacy.elements?.map((element) => ({ element, disabled: false })) ??
-                          createSlots()),
-                  };
-                })
-              : current.characters,
-        };
-      },
     },
   ),
 );

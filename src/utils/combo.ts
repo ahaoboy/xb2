@@ -15,10 +15,11 @@ export const ELEMENT_COUNTER: Record<ElementId, ElementId> = {
   dark: "light",
 };
 
-/** Union of all non-empty, non-disabled elements configured across the party. */
+/** Union of all non-empty, non-disabled elements across enabled characters. */
 export function getAvailableElements(characters: Character[]): Set<ElementId> {
   const available = new Set<ElementId>();
   for (const character of characters) {
+    if (character.disabled) continue;
     for (const slot of character.slots) {
       if (!slot.disabled && slot.element !== null) {
         available.add(slot.element);
@@ -59,8 +60,10 @@ export function computeAssignment(
 
   const candidates = stageElements.map((element) =>
     characters
-      .filter((character) =>
-        character.slots.some((slot) => !slot.disabled && slot.element === element),
+      .filter(
+        (character) =>
+          !character.disabled &&
+          character.slots.some((slot) => !slot.disabled && slot.element === element),
       )
       .map((character) => character.id),
   );
@@ -119,13 +122,44 @@ export interface RouteEntry {
 }
 
 /**
- * Scores a route using XC2 combat mechanics:
- * - repeating the same element (e.g. fire-fire-fire) is hard because the
- *   driver must charge up the same blade repeatedly  -> penalty
- * - more element variety is easier                     -> bonus
- * - distinct drivers per stage avoid switch cooldowns -> bonus
- * - if the party holds the counter element of the final stage, the orb can
- *   be detonated for a full burst                      -> bonus
+ * XC2 energy model: executing the k-th combo stage costs the driver k arts
+ * energy (stage 1 = 1, stage 2 = 2, stage 3 = 3). A driver covering several
+ * stages must charge the SUM of those stage costs:
+ *   - stages 1+2      -> 1+2 = 3 arts
+ *   - stages 2+3      -> 2+3 = 5 arts
+ *   - stages 1+3      -> 1+3 = 4 arts
+ *   - all 3 stages    -> 1+2+3 = 6 arts
+ * Because party energy grows over time, the real difficulty is the HIGHEST
+ * single driver's demand: three drivers one stage each only need 1/2/3 arts
+ * (max 3), while one driver doing all 3 needs 6.
+ */
+function maxEnergyDemand(assignment: RouteAssignment | null): number {
+  const perDriver = new Map<string, number>();
+  for (const [index, id] of (assignment?.assignments ?? []).entries()) {
+    perDriver.set(id, (perDriver.get(id) ?? 0) + (index + 1));
+  }
+  return Math.max(0, ...perDriver.values());
+}
+
+/** Whether the party holds an element that counters (detonates) the route's final orb. */
+export function canDetonateOrb(route: ComboRoute, characters: Character[]): boolean {
+  const counter = ELEMENT_COUNTER[route.stage3];
+  return characters.some(
+    (character) =>
+      !character.disabled &&
+      character.slots.some((slot) => !slot.disabled && slot.element === counter),
+  );
+}
+
+/**
+ * Scores a route by how easily it can be executed (not how many routes
+ * exist):
+ * - repeating the same element (e.g. fire-fire-fire) is tedious   -> penalty
+ * - more element variety is easier                                 -> bonus
+ * - energy: the ideal split (max demand 3 arts) is free; every extra
+ *   art demanded from the busiest driver makes it harder           -> penalty
+ * - if the party holds the counter element of the final stage, the
+ *   orb can be detonated for a full burst                          -> bonus
  */
 export function scoreRoute(
   route: ComboRoute,
@@ -143,14 +177,12 @@ export function scoreRoute(
   // Variety makes the route easier to execute.
   score += new Set(elements).size - 1;
 
-  // Assigning each stage to a different driver avoids switch cooldowns.
-  if (assignment?.optimal) score += 2;
+  // Energy cost: ideal split has max demand 3 arts (one stage per driver);
+  // every extra art demanded from the busiest driver makes it harder.
+  score -= Math.max(0, maxEnergyDemand(assignment) - 3) * 1.5;
 
   // Final-stage orb can be detonated when the party holds the counter element.
-  const counter = ELEMENT_COUNTER[route.stage3];
-  const canDetonate = characters.some((character) =>
-    character.slots.some((slot) => !slot.disabled && slot.element === counter),
-  );
+  const canDetonate = canDetonateOrb(route, characters);
   if (canDetonate) score += 2;
 
   return score;

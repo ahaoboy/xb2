@@ -1,14 +1,6 @@
-import {
-  Avatar,
-  Card,
-  CardContent,
-  Grid,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-} from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/Delete";
+import { Avatar, Card, CardContent, IconButton, Stack, Tooltip } from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useTranslation } from "react-i18next";
 import { useCharactersStore } from "../../store/charactersStore";
 import type { Character } from "../../types";
@@ -19,52 +11,53 @@ interface CharacterCardProps {
   index: number;
 }
 
-/** A party member: name plus 3 element slots laid out responsively. */
+/** A party member: id + lock on the left, 3 stacked element slots. */
 export default function CharacterCard({ character, index }: CharacterCardProps) {
   const { t } = useTranslation();
-  const canDelete = useCharactersStore((state) => state.characters.length > 1);
-  const removeCharacter = useCharactersStore((state) => state.removeCharacter);
-  const updateName = useCharactersStore((state) => state.updateName);
   const setElement = useCharactersStore((state) => state.setElement);
   const toggleSlotDisabled = useCharactersStore((state) => state.toggleSlotDisabled);
+  const toggleCharacterDisabled = useCharactersStore((state) => state.toggleCharacterDisabled);
+
+  const lockLabel = character.disabled ? t("characters.enable") : t("characters.disable");
 
   return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
+    <Card
+      sx={{
+        height: "100%",
+        opacity: character.disabled ? 0.55 : 1,
+        transition: "opacity 0.2s ease",
+      }}
+    >
+      <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <Avatar sx={{ bgcolor: "primary.main", flexShrink: 0 }}>{index + 1}</Avatar>
-          <TextField
-            size="small"
-            fullWidth
-            label={t("characters.nameLabel")}
-            value={character.name}
-            onChange={(event) => updateName(character.id, event.target.value)}
-          />
-          <Tooltip title={canDelete ? t("characters.delete") : t("characters.minReached")}>
-            <span>
-              <IconButton
-                onClick={() => removeCharacter(character.id)}
-                disabled={!canDelete}
-                aria-label={t("characters.delete")}
-              >
-                <DeleteOutlineIcon />
-              </IconButton>
-            </span>
+          <Tooltip title={lockLabel}>
+            <IconButton
+              size="small"
+              onClick={() => toggleCharacterDisabled(character.id)}
+              aria-label={lockLabel}
+            >
+              {character.disabled ? (
+                <LockIcon fontSize="small" color="action" />
+              ) : (
+                <LockOpenIcon fontSize="small" />
+              )}
+            </IconButton>
           </Tooltip>
         </Stack>
 
-        <Grid container spacing={1}>
+        <Stack spacing={1}>
           {character.slots.map((slot, slotIndex) => (
-            <Grid key={slotIndex} size={{ xs: 12, sm: 4 }}>
-              <SlotRow
-                slot={slot}
-                slotIndex={slotIndex}
-                onChange={(element) => setElement(character.id, slotIndex, element)}
-                onToggleDisabled={() => toggleSlotDisabled(character.id, slotIndex)}
-              />
-            </Grid>
+            <SlotRow
+              key={slotIndex}
+              slot={slot}
+              slotIndex={slotIndex}
+              disabled={character.disabled}
+              onChange={(value) => setElement(character.id, slotIndex, value)}
+              onToggleDisabled={() => toggleSlotDisabled(character.id, slotIndex)}
+            />
           ))}
-        </Grid>
+        </Stack>
       </CardContent>
     </Card>
   );

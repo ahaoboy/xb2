@@ -8,12 +8,20 @@ import ElementSelect from "./ElementSelect";
 interface SlotRowProps {
   slot: CharacterSlot;
   slotIndex: number;
+  /** Character-level disable: locks the whole card. */
+  disabled?: boolean;
   onChange: (element: ElementId | null) => void;
   onToggleDisabled: () => void;
 }
 
-/** A single element slot: select plus a lock toggle. */
-export default function SlotRow({ slot, slotIndex, onChange, onToggleDisabled }: SlotRowProps) {
+/** A stacked element slot: select plus a lock toggle. */
+export default function SlotRow({
+  slot,
+  slotIndex,
+  disabled = false,
+  onChange,
+  onToggleDisabled,
+}: SlotRowProps) {
   const { t } = useTranslation();
   const lockLabel = slot.disabled ? t("characters.enableSlot") : t("characters.disableSlot");
 
@@ -21,25 +29,28 @@ export default function SlotRow({ slot, slotIndex, onChange, onToggleDisabled }:
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <ElementSelect
-          label={t("characters.slot", { n: slotIndex + 1 })}
+          ariaLabel={t("characters.slot", { n: slotIndex + 1 })}
           value={slot.element}
-          disabled={slot.disabled}
+          disabled={disabled || slot.disabled}
           onChange={onChange}
         />
       </Box>
       <Tooltip title={lockLabel}>
-        <IconButton
-          size="small"
-          onClick={onToggleDisabled}
-          aria-label={lockLabel}
-          sx={{ flexShrink: 0 }}
-        >
-          {slot.disabled ? (
-            <LockIcon fontSize="small" color="action" />
-          ) : (
-            <LockOpenIcon fontSize="small" />
-          )}
-        </IconButton>
+        <span>
+          <IconButton
+            size="small"
+            onClick={onToggleDisabled}
+            disabled={disabled}
+            aria-label={lockLabel}
+            sx={{ flexShrink: 0 }}
+          >
+            {slot.disabled ? (
+              <LockIcon fontSize="small" color="action" />
+            ) : (
+              <LockOpenIcon fontSize="small" />
+            )}
+          </IconButton>
+        </span>
       </Tooltip>
     </Box>
   );
