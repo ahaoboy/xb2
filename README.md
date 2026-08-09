@@ -2,6 +2,8 @@
 
 A Xenoblade Chronicles 2 blade combo planner — configure your party's elements and get a real-time tree of feasible combo routes with the best picks recommended.
 
+🔗 **Live demo:** <https://ahaoboy.github.io/xb2/>
+
 ## Features
 
 - **Party management** — 1-3 characters, each with 3 element slots; slots can be disabled (e.g. characters with only 1-2 blade slots)

@@ -27,7 +27,6 @@ export default defineConfig({
           zustand: "https://esm.sh/zustand",
           mermaid: "https://esm.sh/mermaid",
           "@mui/material": "https://esm.sh/@mui/material?standalone",
-          "@mui/icons-material": "https://esm.sh/@mui/icons-material?standalone",
           "@mui/styled-engine": "https://esm.sh/@mui/styled-engine?standalone",
           "@emotion/react": "https://esm.sh/@emotion/react",
           "@emotion/styled": "https://esm.sh/@emotion/styled",

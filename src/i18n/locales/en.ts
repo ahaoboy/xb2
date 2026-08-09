@@ -1,6 +1,7 @@
 export default {
   app: {
     title: "XC2 Blade Combo Planner",
+    sourceCode: "View source code on GitHub",
   },
   common: {
     all: "All",

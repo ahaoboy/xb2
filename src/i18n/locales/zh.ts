@@ -1,6 +1,7 @@
 export default {
   app: {
     title: "异度之刃2 异刃连击规划器",
+    sourceCode: "在 GitHub 查看源代码",
   },
   common: {
     all: "全部",
