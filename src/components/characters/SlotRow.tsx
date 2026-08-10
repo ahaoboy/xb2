@@ -1,4 +1,5 @@
 import { Box, IconButton, Tooltip } from "@mui/material";
+import ClearIcon from "@mui/icons-material/Clear";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useTranslation } from "react-i18next";
@@ -14,7 +15,7 @@ interface SlotRowProps {
   onToggleDisabled: () => void;
 }
 
-/** A stacked element slot: select plus a lock toggle. */
+/** A stacked element slot: select plus clear and lock buttons. */
 export default function SlotRow({
   slot,
   slotIndex,
@@ -24,6 +25,7 @@ export default function SlotRow({
 }: SlotRowProps) {
   const { t } = useTranslation();
   const lockLabel = slot.disabled ? t("characters.enableSlot") : t("characters.disableSlot");
+  const hasElement = slot.element !== null;
 
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
@@ -35,6 +37,19 @@ export default function SlotRow({
           onChange={onChange}
         />
       </Box>
+      <Tooltip title={t("characters.clearSlot")}>
+        <span>
+          <IconButton
+            size="small"
+            onClick={() => onChange(null)}
+            disabled={disabled || slot.disabled || !hasElement}
+            aria-label={t("characters.clearSlot")}
+            sx={{ flexShrink: 0 }}
+          >
+            <ClearIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
       <Tooltip title={lockLabel}>
         <span>
           <IconButton

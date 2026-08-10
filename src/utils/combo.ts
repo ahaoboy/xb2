@@ -109,8 +109,14 @@ export interface ComboTreeNode {
   route?: ComboRoute;
   /** Leaf only: best character assignment for the route. */
   assignment?: RouteAssignment | null;
-  /** Leaf only: the best-scoring route within this tree (shown with a *). */
+  /** Leaf only: a route with the top score within this tree (shown with a *). */
   recommended?: boolean;
+  /** Root only: number of routes tied at the tree's top score. */
+  bestCount?: number;
+  /** Root only: check (optimal) route count — the main quality signal. */
+  optimalCount?: number;
+  /** Root only: average route score (check=2, star=1), branch-count independent. */
+  avgScore?: number;
   /** Number of routes in this subtree (used for tooltips). */
   routeCount: number;
 }
@@ -192,29 +198,96 @@ export function scoreRoute(
  * Marks the best-scoring leaf of each root subtree as recommended.
  * Leaves are the only nodes that carry a full route + assignment.
  */
-function markRecommended(root: ComboTreeNode, characters: Character[]): void {
-  /** Returns the best-scoring leaf under `node`, or null when none exists. */
-  const findBestLeaf = (node: ComboTreeNode): ComboTreeNode | null => {
+/**
+ * Marks every leaf that ties at the root tree's top score as recommended
+ * and records how many there are (used to rank starting-element trees).
+ */
+function markBestRoutes(root: ComboTreeNode, characters: Character[]): void {
+  const leaves: ComboTreeNode[] = [];
+  const collect = (node: ComboTreeNode): void => {
     if (node.children.length === 0) {
-      return node.route && node.assignment ? node : null;
+      if (node.route && node.assignment) leaves.push(node);
+      return;
     }
-    let best: ComboTreeNode | null = null;
-    let bestScore = -Infinity;
-    for (const child of node.children) {
-      const candidate = findBestLeaf(child);
-      if (candidate && candidate.route && candidate.assignment) {
-        const score = scoreRoute(candidate.route, characters, candidate.assignment);
-        if (score > bestScore) {
-          bestScore = score;
-          best = candidate;
-        }
-      }
-    }
-    return best;
+    for (const child of node.children) collect(child);
   };
+  collect(root);
 
-  const best = findBestLeaf(root);
-  if (best) best.recommended = true;
+  let topScore = -Infinity;
+  for (const leaf of leaves) {
+    const route = leaf.route;
+    const assignment = leaf.assignment;
+    if (route && assignment) {
+      topScore = Math.max(topScore, scoreRoute(route, characters, assignment));
+    }
+  }
+
+  root.bestCount = 0;
+  root.optimalCount = 0;
+  let totalScore = 0;
+  for (const leaf of leaves) {
+    const route = leaf.route;
+    const assignment = leaf.assignment;
+    if (!route || !assignment) continue;
+    const isBest = scoreRoute(route, characters, assignment) === topScore;
+    if (isBest) {
+      leaf.recommended = true;
+      root.bestCount += 1;
+    }
+    if (assignment.optimal) root.optimalCount += 1;
+    // Per-route icon score: check (optimal) = 2, star (recommended) = 1.
+    totalScore += (assignment.optimal ? 2 : 0) + (isBest ? 1 : 0);
+  }
+  // Average score so trees with more branches don't rank higher by volume.
+  root.avgScore = totalScore / Math.max(1, leaves.length);
+}
+
+/**
+ * Icon-based quality of a leaf: check (optimal) = 2, star (recommended) = 1.
+ */
+function leafIconScore(node: ComboTreeNode): number {
+  return (node.assignment?.optimal ? 2 : 0) + (node.recommended ? 1 : 0);
+}
+
+/** Average leaf icon score under a node; branch count independent. */
+function avgLeafScore(node: ComboTreeNode): number {
+  let total = 0;
+  let count = 0;
+  const visit = (current: ComboTreeNode): void => {
+    if (current.children.length === 0) {
+      total += leafIconScore(current);
+      count += 1;
+      return;
+    }
+    for (const child of current.children) visit(child);
+  };
+  visit(node);
+  return count === 0 ? 0 : total / count;
+}
+
+/** Highest leaf icon score under a node (tie-breaker). */
+function bestLeafScore(node: ComboTreeNode): number {
+  let best = 0;
+  const visit = (current: ComboTreeNode): void => {
+    if (current.children.length === 0) {
+      best = Math.max(best, leafIconScore(current));
+      return;
+    }
+    for (const child of current.children) visit(child);
+  };
+  visit(node);
+  return best;
+}
+
+/** Recursively sorts every node's children so the best branch comes first. */
+function sortChildrenByQuality(node: ComboTreeNode): void {
+  for (const child of node.children) sortChildrenByQuality(child);
+  node.children.sort(
+    (a, b) =>
+      avgLeafScore(b) - avgLeafScore(a) ||
+      bestLeafScore(b) - bestLeafScore(a) ||
+      a.routeCount - b.routeCount,
+  );
 }
 
 /** Groups routes into a 3-level tree keyed by the stage elements. */
@@ -246,8 +319,11 @@ export function buildComboTree(entries: RouteEntry[], characters: Character[]): 
     stage3.routeCount += 1;
   }
 
-  // Mark the best route of each starting-element tree as recommended.
-  for (const root of roots) markRecommended(root, characters);
+  // Mark every top-scoring route of each starting-element tree and count them.
+  for (const root of roots) markBestRoutes(root, characters);
+
+  // Order branches so the best route appears first within each tree.
+  for (const root of roots) sortChildrenByQuality(root);
 
   return roots;
 }

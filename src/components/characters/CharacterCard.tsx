@@ -1,4 +1,5 @@
-import { Avatar, Card, CardContent, IconButton, Stack, Tooltip } from "@mui/material";
+import { Avatar, Box, Card, CardContent, IconButton, Stack, Tooltip } from "@mui/material";
+import ClearAllIcon from "@mui/icons-material/ClearAll";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useTranslation } from "react-i18next";
@@ -11,14 +12,16 @@ interface CharacterCardProps {
   index: number;
 }
 
-/** A party member: id + lock on the left, 3 stacked element slots. */
+/** A party member: id + actions, 3 stacked element slots. */
 export default function CharacterCard({ character, index }: CharacterCardProps) {
   const { t } = useTranslation();
   const setElement = useCharactersStore((state) => state.setElement);
   const toggleSlotDisabled = useCharactersStore((state) => state.toggleSlotDisabled);
   const toggleCharacterDisabled = useCharactersStore((state) => state.toggleCharacterDisabled);
+  const clearCharacter = useCharactersStore((state) => state.clearCharacter);
 
   const lockLabel = character.disabled ? t("characters.enable") : t("characters.disable");
+  const hasAnyElement = character.slots.some((slot) => slot.element !== null);
 
   return (
     <Card
@@ -29,8 +32,21 @@ export default function CharacterCard({ character, index }: CharacterCardProps) 
       }}
     >
       <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <Avatar sx={{ bgcolor: "primary.main", flexShrink: 0 }}>{index + 1}</Avatar>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+          <Avatar sx={{ bgcolor: "primary.main", flexShrink: 0, mr: 0.5 }}>{index + 1}</Avatar>
+          <Box sx={{ flexGrow: 1 }} />
+          <Tooltip title={t("characters.clearAll")}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={() => clearCharacter(character.id)}
+                disabled={!hasAnyElement}
+                aria-label={t("characters.clearAll")}
+              >
+                <ClearAllIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
           <Tooltip title={lockLabel}>
             <IconButton
               size="small"

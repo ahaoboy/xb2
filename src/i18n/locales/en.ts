@@ -15,6 +15,8 @@ export default {
     enable: "Enable character",
     disableSlot: "Disable slot",
     enableSlot: "Enable slot",
+    clearSlot: "Clear slot",
+    clearAll: "Clear all slots",
     autoFill: "Auto-fill",
     autoFillHint: "Automatically pick the best element for every empty slot",
     reset: "Reset",

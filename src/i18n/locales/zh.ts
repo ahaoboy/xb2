@@ -15,6 +15,8 @@ export default {
     enable: "启用成员",
     disableSlot: "禁用槽位",
     enableSlot: "启用槽位",
+    clearSlot: "清空槽位",
+    clearAll: "清空全部槽位",
     autoFill: "自动填充",
     autoFillHint: "自动为每个空槽位计算最佳属性",
     reset: "重置",

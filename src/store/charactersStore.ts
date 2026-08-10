@@ -14,6 +14,8 @@ interface CharactersState {
   toggleSlotDisabled: (id: string, slot: number) => void;
   /** Applies computed auto-fill results to empty slots. */
   fillSlots: (fills: SlotFill[]) => void;
+  /** Clears all slot elements of a character, keeping locks. */
+  clearCharacter: (id: string) => void;
   /** Resets all elements and locks, keeping the current character count. */
   resetAll: () => void;
 }
@@ -81,6 +83,17 @@ export const useCharactersStore = create<CharactersState>()(
             }
             return { ...character, slots };
           }),
+        })),
+      clearCharacter: (id) =>
+        set((state) => ({
+          characters: state.characters.map((character) =>
+            character.id === id
+              ? {
+                  ...character,
+                  slots: character.slots.map((slot) => ({ ...slot, element: null })),
+                }
+              : character,
+          ),
         })),
       resetAll: () =>
         set((state) => ({
