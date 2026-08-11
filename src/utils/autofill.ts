@@ -1,7 +1,6 @@
 import { COMBO_ROUTES } from "../data/comboRoutes";
 import { ELEMENT_IDS, type Character, type ElementId } from "../types";
 import {
-  canDetonateOrb,
   computeAssignment,
   getAvailableElements,
   isRouteFeasible,
@@ -15,64 +14,95 @@ export interface SlotFill {
   element: ElementId;
 }
 
-/**
- * Evaluates a party configuration by:
- * 1. the BEST feasible route — lowest energy demand, final orb detonable
- * 2. how many DIFFERENT routes it completes (same-element routes like
- *    fire-fire-fire collapse into one, so raw route count can't be gamed)
- * 3. raw route count only as a final tie-breaker
- * When nothing is feasible yet, prefers elements that complete the most
- * near-miss routes (2 of 3 stages covered).
- */
-function evaluateParty(characters: Character[]): number {
+/** Auto-fill optimization preference. */
+export type AutofillStrategy = "perfect" | "quality" | "coverage";
+
+interface PartyMetrics {
+  /** Feasible route count. */
+  routeCount: number;
+  /** Routes scoring at the party's top score with an optimal assignment. */
+  perfectCount: number;
+  /** Highest route difficulty score (before orb penalty). */
+  bestScore: number;
+  /** Near-miss routes (2 of 3 stages covered) when nothing is feasible. */
+  potential: number;
+}
+
+/** Computes the quality metrics of a party configuration. */
+function evaluateParty(characters: Character[]): PartyMetrics {
   const available = getAvailableElements(characters);
 
-  let best = -Infinity;
-  let distinctCount = 0;
-  let routeCount = 0;
-  let hasSameElementRoute = false;
+  const metrics: PartyMetrics = {
+    routeCount: 0,
+    perfectCount: 0,
+    bestScore: -Infinity,
+    potential: 0,
+  };
+
+  let topScore = -Infinity;
+  const scored: { route: (typeof COMBO_ROUTES)[number]; assignment: ReturnType<typeof computeAssignment>; score: number }[] = [];
 
   for (const route of COMBO_ROUTES) {
     if (!isRouteFeasible(route, available)) continue;
     const assignment = computeAssignment(route, characters);
-    let score = scoreRoute(route, characters, assignment);
-    // A route whose final orb cannot be detonated is heavily penalized.
-    if (!canDetonateOrb(route, characters)) score -= 10;
-    best = Math.max(best, score);
-    routeCount += 1;
-    if (route.stage1 === route.stage2 && route.stage2 === route.stage3) {
-      hasSameElementRoute = true;
-    } else {
-      distinctCount += 1;
-    }
+    const score = scoreRoute(route, characters, assignment);
+    topScore = Math.max(topScore, score);
+    metrics.routeCount += 1;
+    scored.push({ route, assignment, score });
   }
 
-  if (routeCount === 0) {
-    // No feasible route yet: pick the element that completes the most
-    // near-miss routes (2 of 3 stages already covered).
-    let potential = 0;
+  if (metrics.routeCount === 0) {
+    // Nothing feasible: count near-miss routes (2 of 3 stages covered).
     for (const route of COMBO_ROUTES) {
       let covered = 0;
       if (available.has(route.stage1)) covered += 1;
       if (available.has(route.stage2)) covered += 1;
       if (available.has(route.stage3)) covered += 1;
-      if (covered === 2) potential += 1;
+      if (covered === 2) metrics.potential += 1;
     }
-    return potential;
+    return metrics;
   }
 
-  // All same-element routes count as a single distinct combo.
-  if (hasSameElementRoute) distinctCount += 1;
+  metrics.bestScore = topScore;
+  for (const { assignment, score } of scored) {
+    if (assignment?.optimal && score === topScore) metrics.perfectCount += 1;
+  }
 
-  return best * 1000 + distinctCount * 10 + routeCount;
+  return metrics;
+}
+
+/** Ranks two configurations under the given strategy; positive means `a` is better. */
+function compareByStrategy(a: PartyMetrics, b: PartyMetrics, strategy: AutofillStrategy): number {
+  switch (strategy) {
+    case "perfect":
+      return (
+        a.perfectCount - b.perfectCount ||
+        a.routeCount - b.routeCount ||
+        a.bestScore - b.bestScore
+      );
+    case "quality":
+      return (
+        a.bestScore - b.bestScore ||
+        a.perfectCount - b.perfectCount ||
+        a.routeCount - b.routeCount
+      );
+    case "coverage":
+      return a.routeCount - b.routeCount || a.perfectCount - b.perfectCount;
+  }
 }
 
 /**
- * Greedily fills every empty (non-disabled) slot with the element that
- * maximizes the party's overall feasibility score at each step.
+ * Greedily fills every empty (non-disabled) slot with the element that best
+ * matches the chosen strategy at each step:
+ * - perfect: maximize PERFECT routes (top score + optimal assignment)
+ * - quality: maximize the best route's difficulty score
+ * - coverage: maximize the total number of feasible routes
  * Disabled characters and disabled slots are never touched.
  */
-export function computeAutoFill(characters: Character[]): SlotFill[] {
+export function computeAutoFill(
+  characters: Character[],
+  strategy: AutofillStrategy = "perfect",
+): SlotFill[] {
   const mutable = characters.map((character) => ({
     ...character,
     slots: character.slots.map((slot) => ({ ...slot })),
@@ -94,14 +124,17 @@ export function computeAutoFill(characters: Character[]): SlotFill[] {
     if (!character) continue;
 
     let best: ElementId | null = null;
-    let bestScore = -Infinity;
+    let bestMetrics: PartyMetrics | null = null;
     const previous = character.slots[target.slotIndex];
 
     for (const element of ELEMENT_IDS) {
       character.slots[target.slotIndex] = { element, disabled: false };
-      const score = evaluateParty(mutable);
-      if (score > bestScore) {
-        bestScore = score;
+      const metrics = evaluateParty(mutable);
+      if (
+        bestMetrics === null ||
+        compareByStrategy(metrics, bestMetrics, strategy) > 0
+      ) {
+        bestMetrics = metrics;
         best = element;
       }
     }

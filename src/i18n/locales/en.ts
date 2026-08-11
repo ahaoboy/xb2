@@ -19,6 +19,13 @@ export default {
     clearAll: "Clear all slots",
     autoFill: "Auto-fill",
     autoFillHint: "Automatically pick the best element for every empty slot",
+    autoFillStrategy: "Auto-fill strategy",
+    autoFillStrategyHint: "What should auto-fill optimize for",
+    strategy: {
+      perfect: "Perfect",
+      quality: "Quality",
+      coverage: "Coverage",
+    },
     reset: "Reset",
     resetHint: "Clear all elements and locks",
     hint: "Each character has 3 element slots. Lock a character or slot to exclude it from planning.",

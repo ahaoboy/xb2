@@ -19,6 +19,13 @@ export default {
     clearAll: "清空全部槽位",
     autoFill: "自动填充",
     autoFillHint: "自动为每个空槽位计算最佳属性",
+    autoFillStrategy: "填充策略",
+    autoFillStrategyHint: "自动填充的优化目标",
+    strategy: {
+      perfect: "完美",
+      quality: "质量",
+      coverage: "覆盖",
+    },
     reset: "重置",
     resetHint: "清除所有属性和锁定",
     hint: "每名成员有 3 个属性槽位，可用锁图标禁用成员或槽位以排除在规划之外。",

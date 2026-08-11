@@ -1,10 +1,14 @@
-import { Button, Chip, Grid, Stack, Tooltip, Typography } from "@mui/material";
+import { Button, Chip, Grid, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { useSettingsStore } from "../../store/settingsStore";
 import { MAX_CHARACTERS, useCharactersStore } from "../../store/charactersStore";
-import { computeAutoFill } from "../../utils/autofill";
+import { computeAutoFill, type AutofillStrategy } from "../../utils/autofill";
 import CharacterCard from "./CharacterCard";
+
+const STRATEGIES: AutofillStrategy[] = ["perfect", "quality", "coverage"];
 
 /** Party management: 3 fixed characters, each with 3 element slots. */
 export default function CharacterPanel() {
@@ -12,6 +16,8 @@ export default function CharacterPanel() {
   const characters = useCharactersStore((state) => state.characters);
   const fillSlots = useCharactersStore((state) => state.fillSlots);
   const resetAll = useCharactersStore((state) => state.resetAll);
+  const strategy = useSettingsStore((state) => state.autofillStrategy);
+  const setStrategy = useSettingsStore((state) => state.setAutofillStrategy);
 
   const hasEmptySlots = characters.some(
     (character) =>
@@ -24,8 +30,12 @@ export default function CharacterPanel() {
       character.disabled || character.slots.some((slot) => slot.element !== null || slot.disabled),
   );
 
+  const handleStrategyChange = (_event: MouseEvent<HTMLElement>, value: AutofillStrategy | null) => {
+    if (value !== null) setStrategy(value);
+  };
+
   const handleAutoFill = () => {
-    fillSlots(computeAutoFill(characters));
+    fillSlots(computeAutoFill(characters, strategy));
   };
 
   return (
@@ -50,7 +60,22 @@ export default function CharacterPanel() {
             label={`${characters.length} / ${MAX_CHARACTERS}`}
           />
         </Stack>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Tooltip title={t("characters.autoFillStrategyHint")}>
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={strategy}
+              onChange={handleStrategyChange}
+              aria-label={t("characters.autoFillStrategy")}
+            >
+              {STRATEGIES.map((item) => (
+                <ToggleButton key={item} value={item}>
+                  {t(`characters.strategy.${item}`)}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </Tooltip>
           <Tooltip title={t("characters.resetHint")}>
             <span>
               <Button
