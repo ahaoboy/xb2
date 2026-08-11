@@ -1,6 +1,7 @@
 import { COMBO_ROUTES } from "../data/comboRoutes";
 import { ELEMENT_IDS, type Character, type ElementId } from "../types";
 import {
+  canDetonateOrb,
   computeAssignment,
   getAvailableElements,
   isRouteFeasible,
@@ -24,6 +25,10 @@ interface PartyMetrics {
   perfectCount: number;
   /** Highest route difficulty score (before orb penalty). */
   bestScore: number;
+  /** Distinct final-stage (stage 3) elements across routes executable by 3 different drivers. */
+  elementCount: number;
+  /** Feasible routes whose final orb can be detonated by the party. */
+  detonableCount: number;
   /** Near-miss routes (2 of 3 stages covered) when nothing is feasible. */
   potential: number;
 }
@@ -36,11 +41,20 @@ function evaluateParty(characters: Character[]): PartyMetrics {
     routeCount: 0,
     perfectCount: 0,
     bestScore: -Infinity,
+    elementCount: 0,
+    detonableCount: 0,
     potential: 0,
   };
 
   let topScore = -Infinity;
-  const scored: { route: (typeof COMBO_ROUTES)[number]; assignment: ReturnType<typeof computeAssignment>; score: number }[] = [];
+  const scored: {
+    route: (typeof COMBO_ROUTES)[number];
+    assignment: ReturnType<typeof computeAssignment>;
+    score: number;
+  }[] = [];
+  // Distinct stage-3 elements covered by routes that 3 distinct drivers can execute.
+  const optimalElements = new Set<ElementId>();
+  let detonable = 0;
 
   for (const route of COMBO_ROUTES) {
     if (!isRouteFeasible(route, available)) continue;
@@ -48,6 +62,10 @@ function evaluateParty(characters: Character[]): PartyMetrics {
     const score = scoreRoute(route, characters, assignment);
     topScore = Math.max(topScore, score);
     metrics.routeCount += 1;
+    if (assignment?.optimal) {
+      optimalElements.add(route.stage3);
+    }
+    if (canDetonateOrb(route, characters)) detonable += 1;
     scored.push({ route, assignment, score });
   }
 
@@ -64,6 +82,8 @@ function evaluateParty(characters: Character[]): PartyMetrics {
   }
 
   metrics.bestScore = topScore;
+  metrics.elementCount = optimalElements.size;
+  metrics.detonableCount = detonable;
   for (const { assignment, score } of scored) {
     if (assignment?.optimal && score === topScore) metrics.perfectCount += 1;
   }
@@ -77,17 +97,26 @@ function compareByStrategy(a: PartyMetrics, b: PartyMetrics, strategy: AutofillS
     case "perfect":
       return (
         a.perfectCount - b.perfectCount ||
+        a.detonableCount - b.detonableCount ||
+        a.elementCount - b.elementCount ||
         a.routeCount - b.routeCount ||
         a.bestScore - b.bestScore
       );
     case "quality":
       return (
         a.bestScore - b.bestScore ||
+        a.detonableCount - b.detonableCount ||
+        a.elementCount - b.elementCount ||
         a.perfectCount - b.perfectCount ||
         a.routeCount - b.routeCount
       );
     case "coverage":
-      return a.routeCount - b.routeCount || a.perfectCount - b.perfectCount;
+      return (
+        a.routeCount - b.routeCount ||
+        a.elementCount - b.elementCount ||
+        a.detonableCount - b.detonableCount ||
+        a.perfectCount - b.perfectCount
+      );
   }
 }
 
