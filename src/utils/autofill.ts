@@ -159,10 +159,7 @@ export function computeAutoFill(
     for (const element of ELEMENT_IDS) {
       character.slots[target.slotIndex] = { element, disabled: false };
       const metrics = evaluateParty(mutable);
-      if (
-        bestMetrics === null ||
-        compareByStrategy(metrics, bestMetrics, strategy) > 0
-      ) {
+      if (bestMetrics === null || compareByStrategy(metrics, bestMetrics, strategy) > 0) {
         bestMetrics = metrics;
         best = element;
       }

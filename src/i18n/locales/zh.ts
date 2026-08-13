@@ -2,6 +2,8 @@ export default {
   app: {
     title: "异度之刃2 异刃连击规划器",
     sourceCode: "在 GitHub 查看源代码",
+    view: "页面",
+    viewPlanner: "规划",
   },
   common: {
     all: "全部",
@@ -56,6 +58,17 @@ export default {
     dot: "持续伤害",
     range: "范围",
     reaction: "反应",
+    charts: {
+      tree: "树图",
+      sunburst: "旭日",
+      heatmap: "热力",
+      stage3: "目标",
+      noRoutes: "无对应路线",
+      noData: "数据缺失",
+      zoomIn: "放大",
+      zoomOut: "缩小",
+      fit: "适应宽度",
+    },
   },
   seals: {
     selfDestruct: "封印自爆",

@@ -2,6 +2,8 @@ export default {
   app: {
     title: "XC2 Blade Combo Planner",
     sourceCode: "View source code on GitHub",
+    view: "Page",
+    viewPlanner: "Plan",
   },
   common: {
     all: "All",
@@ -56,6 +58,17 @@ export default {
     dot: "DoT",
     range: "Range",
     reaction: "Reaction",
+    charts: {
+      tree: "Tree",
+      sunburst: "Sunburst",
+      heatmap: "Heatmap",
+      stage3: "Target",
+      noRoutes: "No routes for this target",
+      noData: "N/A",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
+      fit: "Fit to width",
+    },
   },
   seals: {
     selfDestruct: "Seal Self-Destruct",

@@ -2,7 +2,9 @@ import type { ComboRoute } from "../types";
 
 /**
  * All blade combo routes (stage 1 -> stage 2 -> stage 3 -> seal effect).
- * Data transcribed from the official XC2 blade combo chart.
+ *
+ * Reference: neoseeker XC2 Chain Combo guide
+ * https://www.neoseeker.com/xenoblade-chronicles-2/faqs/3006960-chain-combo.html
  */
 export const COMBO_ROUTES: ComboRoute[] = [
   // Fire start
@@ -72,11 +74,11 @@ export const COMBO_ROUTES: ComboRoute[] = [
     seal: "backAttack",
   },
   {
-    id: "wind-electric-water",
+    id: "wind-ice-ice",
     stage1: "wind",
-    stage2: "electric",
-    stage3: "water",
-    seal: "noxious",
+    stage2: "ice",
+    stage3: "ice",
+    seal: "shackleBlade",
   },
 
   // Ice start

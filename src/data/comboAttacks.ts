@@ -1,13 +1,14 @@
 /**
  * Named fusion-combo attacks with their damage stats.
  *
- * Data transcribed from the XC2 fusion combo chart (xenoblade2.cn). Each
- * entry is keyed by its element path:
+ * Each entry is keyed by its element path:
  *   - stage 1: `fire`
  *   - stage 2: `fire-water`
  *   - stage 3: `fire-fire-fire` (matches `ComboRoute.id`)
  *
- * Note: `wind-electric-water` has no entry in the source chart.
+ * References:
+ * - https://www.neoseeker.com/xenoblade-chronicles-2/faqs/3006960-chain-combo.html
+ * - https://xenoblade2.cn
  */
 
 /** Game data text that ships in both supported UI languages. */
@@ -60,6 +61,7 @@ export const COMBO_ATTACKS: Record<string, ComboAttack> = {
     range: 3,
     reaction: { zh: "击退LV5", en: "Knockback Lv.5" },
   },
+  "wind-ice": { name: { zh: "冰刃风暴", en: "Ice Blade Storm" }, direct: 225 },
   "ice-water": { name: { zh: "冰雹暴击", en: "Hail Strike" }, direct: 203, range: 3 },
   "ice-ice": { name: { zh: "冰霜冻结", en: "Frost Freeze" }, direct: 50, dot: 8 },
   "light-electric": { name: { zh: "雷霆爆裂", en: "Thunderbolt Burst" }, direct: 225 },
@@ -117,6 +119,7 @@ export const COMBO_ATTACKS: Record<string, ComboAttack> = {
     range: 5,
     reaction: { zh: "吹飞LV3", en: "Blowdown Lv.3" },
   },
+  "wind-ice-ice": { name: { zh: "寒霜台风", en: "Frost Typhoon" }, direct: 270, range: 5 },
   "ice-water-wind": {
     name: { zh: "冬日毁灭", en: "Winter Ruin" },
     direct: 255,

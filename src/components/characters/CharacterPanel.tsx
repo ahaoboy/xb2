@@ -1,4 +1,13 @@
-import { Button, Chip, Grid, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
+import {
+  Button,
+  Chip,
+  Grid,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import type { MouseEvent } from "react";
@@ -30,7 +39,10 @@ export default function CharacterPanel() {
       character.disabled || character.slots.some((slot) => slot.element !== null || slot.disabled),
   );
 
-  const handleStrategyChange = (_event: MouseEvent<HTMLElement>, value: AutofillStrategy | null) => {
+  const handleStrategyChange = (
+    _event: MouseEvent<HTMLElement>,
+    value: AutofillStrategy | null,
+  ) => {
     if (value !== null) setStrategy(value);
   };
 
