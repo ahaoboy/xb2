@@ -4,10 +4,25 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useTranslation } from "react-i18next";
 import { COMBO_ATTACKS, pickLocalized } from "../../../data/comboAttacks";
+import { useResponsiveScale } from "../../../hooks/useResponsiveScale";
 import type { ElementId } from "../../../types";
 import { useCurrentLanguage } from "../../../hooks/useCurrentLanguage";
 import type { ComboTreeNode } from "../../../utils/combo";
 import ElementNode from "../../elements/ElementNode";
+
+/** A slightly elongated route arrow (1.5× wide, same height). */
+function RouteArrow({ back = false, scale = 1 }: { back?: boolean; scale?: number }) {
+  const Icon = back ? ArrowBackIcon : ArrowForwardIcon;
+  return (
+    <Icon
+      sx={{
+        fontSize: 13 * scale,
+        color: "text.secondary",
+        transform: "scaleX(1.5)",
+      }}
+    />
+  );
+}
 
 interface Stage3ChartProps {
   roots: ComboTreeNode[];
@@ -42,6 +57,7 @@ const COUNTER_PAIRS: [ElementId, ElementId][] = [
 export default function Stage3Chart({ roots }: Stage3ChartProps) {
   const { t } = useTranslation();
   const lang = useCurrentLanguage();
+  const scale = useResponsiveScale();
 
   const groups = useMemo(() => {
     const map = new Map<ElementId, RouteLine[]>();
@@ -72,11 +88,11 @@ export default function Stage3Chart({ roots }: Stage3ChartProps) {
         <Grid key={`${left}-${right}`} container spacing={1}>
           {/* Left card: mirrored (stage 3 ← stage 2 ← stage 1), right-aligned. */}
           <Grid size={6}>
-            <TargetCard target={left} lines={groups.get(left) ?? []} t={t} mirrored />
+            <TargetCard target={left} lines={groups.get(left) ?? []} t={t} scale={scale} mirrored />
           </Grid>
           {/* Right card: forward order (stage 1 → stage 2 → stage 3). */}
           <Grid size={6}>
-            <TargetCard target={right} lines={groups.get(right) ?? []} t={t} />
+            <TargetCard target={right} lines={groups.get(right) ?? []} t={t} scale={scale} />
           </Grid>
         </Grid>
       ))}
@@ -88,18 +104,20 @@ function TargetCard({
   target,
   lines,
   t,
+  scale = 1,
   mirrored = false,
 }: {
   target: ElementId;
   lines: RouteLine[];
   t: (key: string) => string;
+  scale?: number;
   /** When true, routes render in reverse with left arrows, right-aligned. */
   mirrored?: boolean;
 }) {
   return (
     <Paper variant="outlined" sx={{ p: 1, height: "100%" }}>
       <Box sx={{ mb: 0.75, display: "flex", justifyContent: mirrored ? "flex-end" : "flex-start" }}>
-        <ElementNode element={target} size={14} />
+        <ElementNode element={target} size={14 * scale} />
       </Box>
       {lines.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
@@ -125,19 +143,19 @@ function TargetCard({
               >
                 {mirrored ? (
                   <>
-                    <ElementNode element={line.stage3} size={11} />
-                    <ArrowBackIcon sx={{ fontSize: 12, color: "text.secondary" }} />
-                    <ElementNode element={line.stage2} size={11} />
-                    <ArrowBackIcon sx={{ fontSize: 12, color: "text.secondary" }} />
-                    <ElementNode element={line.stage1} size={11} />
+                    <ElementNode element={line.stage3} size={11 * scale} />
+                    <RouteArrow back scale={scale} />
+                    <ElementNode element={line.stage2} size={11 * scale} />
+                    <RouteArrow back scale={scale} />
+                    <ElementNode element={line.stage1} size={11 * scale} />
                   </>
                 ) : (
                   <>
-                    <ElementNode element={line.stage1} size={11} />
-                    <ArrowForwardIcon sx={{ fontSize: 12, color: "text.secondary" }} />
-                    <ElementNode element={line.stage2} size={11} />
-                    <ArrowForwardIcon sx={{ fontSize: 12, color: "text.secondary" }} />
-                    <ElementNode element={line.stage3} size={11} />
+                    <ElementNode element={line.stage1} size={11 * scale} />
+                    <RouteArrow scale={scale} />
+                    <ElementNode element={line.stage2} size={11 * scale} />
+                    <RouteArrow scale={scale} />
+                    <ElementNode element={line.stage3} size={11 * scale} />
                   </>
                 )}
               </Stack>
