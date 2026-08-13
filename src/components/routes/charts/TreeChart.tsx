@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { COMBO_ATTACKS, pickLocalized } from "../../../data/comboAttacks";
 import { ELEMENT_META } from "../../../data/elements";
 import { useCurrentLanguage } from "../../../hooks/useCurrentLanguage";
+import { useResponsiveScale } from "../../../hooks/useResponsiveScale";
 import type { ComboTreeNode } from "../../../utils/combo";
 
 interface TreeChartProps {
@@ -18,7 +19,7 @@ const LEVEL_GAP = 220;
 const ROW_GAP = 12;
 const PADDING = 24;
 const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 3;
+const MAX_ZOOM = 4;
 
 interface Positioned {
   node: ComboTreeNode;
@@ -34,8 +35,13 @@ export default function TreeChart({ roots }: TreeChartProps) {
   const lang = useCurrentLanguage();
   const zh = lang.startsWith("zh");
   const [zoom, setZoom] = useState(1);
+  const scale = useResponsiveScale();
 
   const { nodes, width, height } = useMemo(() => {
+    // All layout constants scale with the viewport so the tree stays
+    // readable on large screens.
+    const s = (value: number): number => value * scale;
+
     const estimateWidth = (node: ComboTreeNode): number => {
       const label = (() => {
         if (node.children.length === 0) {
@@ -46,7 +52,7 @@ export default function TreeChart({ roots }: TreeChartProps) {
         }
         return t(`elements.${node.element}`);
       })();
-      return Math.min(340, label.length * (zh ? 13 : 7.6) + 44);
+      return Math.min(s(340), label.length * s(zh ? 13 : 7.6) + s(44));
     };
 
     // Uniform width per stage: the widest label of that stage, so all nodes
@@ -64,10 +70,10 @@ export default function TreeChart({ roots }: TreeChartProps) {
 
     const all: Positioned[] = [];
     // Start at PADDING so the first root node's half-height never clips.
-    let leafY = PADDING;
+    let leafY = s(PADDING);
 
     const visit = (node: ComboTreeNode, depth: number): Positioned => {
-      const x = PADDING + depth * LEVEL_GAP;
+      const x = s(PADDING) + depth * s(LEVEL_GAP);
       if (node.children.length === 0) {
         const pos: Positioned = {
           node,
@@ -76,7 +82,7 @@ export default function TreeChart({ roots }: TreeChartProps) {
           width: stageWidths[3],
           parent: null,
         };
-        leafY += NODE_HEIGHT + ROW_GAP;
+        leafY += s(NODE_HEIGHT) + s(ROW_GAP);
         all.push(pos);
         return pos;
       }
@@ -97,10 +103,10 @@ export default function TreeChart({ roots }: TreeChartProps) {
     };
 
     for (const root of roots) visit(root, 0);
-    const width = all.reduce((m, p) => Math.max(m, p.x + p.width), 0) + PADDING;
-    const height = Math.max(leafY - ROW_GAP, 1) + PADDING;
+    const width = all.reduce((m, p) => Math.max(m, p.x + p.width), 0) + s(PADDING);
+    const height = Math.max(leafY - s(ROW_GAP), 1) + s(PADDING);
     return { nodes: all, width, height };
-  }, [roots, t, lang, zh]);
+  }, [roots, t, lang, zh, scale]);
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -140,9 +146,13 @@ export default function TreeChart({ roots }: TreeChartProps) {
         <svg
           viewBox={`0 0 ${width} ${height}`}
           style={{
-            // Fit: never enlarge beyond the tree's natural size, shrink when the
-            // container is narrower. Zoom > 1 uses pixel sizing and scrolls.
-            width: zoom === 1 ? `min(100%, ${width}px)` : `${Math.round(width * zoom)}px`,
+            // Fit: shrink when the container is narrower, grow up to the
+            // viewport-scaled size on large screens. Zoom > 1 uses pixel
+            // sizing and scrolls.
+            width:
+              zoom === 1
+                ? `min(100%, ${Math.round(width * scale)}px)`
+                : `${Math.round(width * zoom)}px`,
             maxWidth: "100%",
             height: "auto",
             display: "block",
@@ -171,7 +181,13 @@ export default function TreeChart({ roots }: TreeChartProps) {
           )}
           {/* Nodes */}
           {nodes.map((pos) => (
-            <NodeShape key={`node-${pos.node.path.join("-")}`} pos={pos} t={t} lang={lang} />
+            <NodeShape
+              key={`node-${pos.node.path.join("-")}`}
+              pos={pos}
+              t={t}
+              lang={lang}
+              scale={scale}
+            />
           ))}
         </svg>
       </Box>
@@ -183,10 +199,12 @@ function NodeShape({
   pos,
   t,
   lang,
+  scale,
 }: {
   pos: Positioned;
   t: (key: string) => string;
   lang: string;
+  scale: number;
 }) {
   const { node } = pos;
   const meta = ELEMENT_META[node.element];
@@ -202,10 +220,12 @@ function NodeShape({
     return t(`elements.${node.element}`);
   })();
 
-  const fontSize = isLeaf ? 11 : 12;
+  const fontSize = (isLeaf ? 11 : 12) * scale;
+  const nodeHeight = NODE_HEIGHT * scale;
   const cy = pos.y;
-  const iconX = pos.x + 10;
-  const textX = iconX + 22;
+  const iconSize = 16 * scale;
+  const iconX = pos.x + 10 * scale;
+  const textX = iconX + iconSize + 6 * scale;
 
   const tooltipLines = [
     attack ? `${pickLocalized(attack.name, lang)} · ${attack.direct}%` : "",
@@ -223,10 +243,10 @@ function NodeShape({
       <title>{tooltipLines || label}</title>
       <rect
         x={pos.x}
-        y={cy - NODE_HEIGHT / 2}
+        y={cy - nodeHeight / 2}
         width={pos.width}
-        height={NODE_HEIGHT}
-        rx={8}
+        height={nodeHeight}
+        rx={8 * scale}
         fill={meta.color}
         stroke={node.recommended ? "#f6b93b" : "none"}
         strokeWidth={node.recommended ? 2 : 0}
@@ -234,9 +254,9 @@ function NodeShape({
       <image
         href={meta.icon}
         x={iconX}
-        y={cy - 8}
-        width={16}
-        height={16}
+        y={cy - iconSize / 2}
+        width={iconSize}
+        height={iconSize}
         preserveAspectRatio="xMidYMid meet"
       />
       <text

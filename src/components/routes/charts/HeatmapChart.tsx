@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Box, Paper, Tooltip, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useResponsiveScale } from "../../../hooks/useResponsiveScale";
 import { ELEMENT_IDS } from "../../../types";
 import type { ElementId } from "../../../types";
 import type { ComboTreeNode } from "../../../utils/combo";
@@ -21,6 +22,8 @@ interface CellData {
 
 /** Matrix heatmap: rows = stage 1, columns = stage 2, intensity = route quality. */
 export default function HeatmapChart({ roots }: HeatmapChartProps) {
+  const scale = useResponsiveScale();
+
   const cells = useMemo(() => {
     const map = new Map<string, CellData>();
     for (const root of roots) {
@@ -50,9 +53,9 @@ export default function HeatmapChart({ roots }: HeatmapChartProps) {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: `44px repeat(${ELEMENT_IDS.length}, minmax(64px, 1fr))`,
+          gridTemplateColumns: `${44 * scale}px repeat(${ELEMENT_IDS.length}, minmax(${64 * scale}px, 1fr))`,
           gap: 0.5,
-          minWidth: 620,
+          minWidth: 620 * scale,
         }}
       >
         {/* Corner + column headers */}
@@ -72,9 +75,10 @@ export default function HeatmapChart({ roots }: HeatmapChartProps) {
 
 function ColumnHeader({ element }: { element: ElementId }) {
   const { t } = useTranslation();
+  const scale = useResponsiveScale();
   return (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.25 }}>
-      <ElementDot element={element} size={14} />
+      <ElementDot element={element} size={14 * scale} />
       <Typography variant="caption" noWrap>
         {t(`elements.${element}`)}
       </Typography>
@@ -92,10 +96,11 @@ function Row({
   maxCount: number;
 }) {
   const { t } = useTranslation();
+  const scale = useResponsiveScale();
   return (
     <>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-        <ElementDot element={stage1} size={14} />
+        <ElementDot element={stage1} size={14 * scale} />
         <Typography variant="caption" noWrap>
           {t(`elements.${stage1}`)}
         </Typography>
@@ -122,12 +127,13 @@ function Cell({
   stage2: ElementId;
 }) {
   const { t } = useTranslation();
+  const scale = useResponsiveScale();
 
   if (!cell) {
     return (
       <Box
         sx={{
-          minHeight: 52,
+          minHeight: 52 * scale,
           borderRadius: 1,
           border: 1,
           borderColor: "divider",
@@ -158,7 +164,7 @@ function Cell({
     <Tooltip title={tooltipLines} slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}>
       <Box
         sx={{
-          minHeight: 52,
+          minHeight: 52 * scale,
           borderRadius: 1,
           border: cell.recommendedCount > 0 ? 1.5 : 1,
           borderColor: cell.recommendedCount > 0 ? "warning.main" : "divider",
@@ -175,7 +181,7 @@ function Cell({
       >
         <Box sx={{ display: "flex", gap: 0.25 }}>
           {cell.leaves.slice(0, 3).map((leaf) => (
-            <ElementDot key={leaf.element} element={leaf.element} size={12} />
+            <ElementDot key={leaf.element} element={leaf.element} size={12 * scale} />
           ))}
         </Box>
         <Typography variant="caption" sx={{ fontWeight: 700 }}>

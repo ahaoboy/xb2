@@ -6,6 +6,7 @@ import AppHeader from "./components/AppHeader";
 import CharacterPanel from "./components/characters/CharacterPanel";
 import ComboResults from "./components/routes/ComboResults";
 import { useResolvedThemeMode } from "./hooks/useResolvedThemeMode";
+import { useResponsiveScale } from "./hooks/useResponsiveScale";
 import i18n from "./i18n";
 import ChartsPage, { type ChartMode } from "./pages/ChartsPage";
 import { useSettingsStore } from "./store/settingsStore";
@@ -15,18 +16,24 @@ import { appTheme } from "./theme/theme";
 export type AppView = "planner" | ChartMode;
 
 /**
- * Keeps MUI color scheme, i18next language, and document metadata
- * (`<html lang>`, title) in sync with the persisted settings store.
+ * Keeps MUI color scheme, i18next language, document metadata
+ * (`<html lang>`, title), and the root font size in sync.
  */
 function SettingsSync() {
   const language = useSettingsStore((state) => state.language);
   const resolvedMode = useResolvedThemeMode();
+  const scale = useResponsiveScale();
   const { setMode } = useColorScheme();
   const { t } = useTranslation();
 
   useEffect(() => {
     setMode(resolvedMode);
   }, [resolvedMode, setMode]);
+
+  useEffect(() => {
+    // Scale all rem-based MUI text on large screens.
+    document.documentElement.style.fontSize = `${16 * scale}px`;
+  }, [scale]);
 
   useEffect(() => {
     void i18n.changeLanguage(language);
@@ -48,7 +55,12 @@ export default function App() {
       <SettingsSync />
       <CssBaseline />
       <AppHeader view={view} onViewChange={setView} />
-      <Container maxWidth="xl" sx={{ py: 3 }}>
+      {/* Chart views use full width and minimal padding so they can fill
+          large screens; the planner keeps its comfortable spacing. */}
+      <Container
+        maxWidth={view === "planner" ? "xl" : false}
+        sx={view === "planner" ? { py: 3 } : { p: 1 }}
+      >
         {view === "planner" ? (
           <Stack spacing={4}>
             <CharacterPanel />

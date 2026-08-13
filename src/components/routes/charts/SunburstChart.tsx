@@ -10,7 +10,6 @@ interface SunburstChartProps {
 }
 
 const SIZE = 460;
-const CENTER = SIZE / 2;
 const R1 = 72; // stage 1 ring
 const R2 = 138; // stage 2 ring
 const R3 = 200; // stage 3 ring
@@ -37,6 +36,7 @@ function arcPath(cx: number, cy: number, r0: number, r1: number, a0: number, a1:
 /** Sunburst (radial) chart: center = start element, outward = stages 2 & 3. */
 export default function SunburstChart({ roots }: SunburstChartProps) {
   const { t } = useTranslation();
+  const center = SIZE / 2;
 
   const { segments, total } = useMemo(() => {
     const segments: Segment[] = [];
@@ -98,13 +98,29 @@ export default function SunburstChart({ roots }: SunburstChartProps) {
   }, [roots, t]);
 
   return (
-    <Paper variant="outlined" sx={{ p: 2, display: "flex", justifyContent: "center" }}>
-      <Stack spacing={1} sx={{ alignItems: "center" }}>
-        <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+    <Paper
+      variant="outlined"
+      sx={{ p: 2, display: "flex", justifyContent: "center", width: "100%" }}
+    >
+      <Stack spacing={1} sx={{ alignItems: "center", width: "100%" }}>
+        {/* Logical coordinates stay fixed; the viewBox scales the whole chart.
+            Width = up to the viewport height minus the header (~65px),
+            container padding (~48px) and paper padding (~16px), so the chart
+            fits the screen exactly. Shrinks only when the container is
+            narrower. */}
+        <svg
+          viewBox={`0 0 ${SIZE} ${SIZE}`}
+          style={{
+            width: "min(100%, calc(100vh - 140px))",
+            height: "auto",
+            maxWidth: "100%",
+            display: "block",
+          }}
+        >
           {segments.map((seg, i) => (
             <path
               key={`${seg.element}-${i}`}
-              d={arcPath(CENTER, CENTER, seg.r0, seg.r1, seg.a0, seg.a1)}
+              d={arcPath(center, center, seg.r0, seg.r1, seg.a0, seg.a1)}
               fill={ELEMENT_META[seg.element].color}
               stroke="var(--mui-palette-background-paper)"
               strokeWidth={1.5}
@@ -112,10 +128,10 @@ export default function SunburstChart({ roots }: SunburstChartProps) {
               <title>{`${seg.label} · ${seg.count}`}</title>
             </path>
           ))}
-          <circle cx={CENTER} cy={CENTER} r={R1 - 14} fill="var(--mui-palette-background-paper)" />
+          <circle cx={center} cy={center} r={R1 - 14} fill="var(--mui-palette-background-paper)" />
           <text
-            x={CENTER}
-            y={CENTER - 4}
+            x={center}
+            y={center - 4}
             textAnchor="middle"
             fontSize={22}
             fontWeight={800}
@@ -124,8 +140,8 @@ export default function SunburstChart({ roots }: SunburstChartProps) {
             {total}
           </text>
           <text
-            x={CENTER}
-            y={CENTER + 16}
+            x={center}
+            y={center + 16}
             textAnchor="middle"
             fontSize={11}
             fill="var(--mui-palette-text-secondary)"
