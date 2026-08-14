@@ -38,10 +38,10 @@ export default function SunburstChart({ roots }: SunburstChartProps) {
   const { t } = useTranslation();
   const center = SIZE / 2;
 
-  const { segments, total } = useMemo(() => {
+  const { segments } = useMemo(() => {
     const segments: Segment[] = [];
     const total = roots.reduce((sum, root) => sum + root.routeCount, 0);
-    if (total === 0) return { segments, total };
+    if (total === 0) return { segments };
 
     let angle = -Math.PI / 2;
 
@@ -94,7 +94,7 @@ export default function SunburstChart({ roots }: SunburstChartProps) {
       });
       angle += rootSweep;
     }
-    return { segments, total };
+    return { segments };
   }, [roots, t]);
 
   return (
@@ -129,25 +129,6 @@ export default function SunburstChart({ roots }: SunburstChartProps) {
             </path>
           ))}
           <circle cx={center} cy={center} r={R1 - 14} fill="var(--mui-palette-background-paper)" />
-          <text
-            x={center}
-            y={center - 4}
-            textAnchor="middle"
-            fontSize={22}
-            fontWeight={800}
-            fill="var(--mui-palette-text-primary)"
-          >
-            {total}
-          </text>
-          <text
-            x={center}
-            y={center + 16}
-            textAnchor="middle"
-            fontSize={11}
-            fill="var(--mui-palette-text-secondary)"
-          >
-            {t("routes.count", { count: total })}
-          </text>
         </svg>
 
         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "center" }}>

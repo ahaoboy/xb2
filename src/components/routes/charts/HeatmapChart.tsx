@@ -9,6 +9,8 @@ import ElementDot from "../../elements/ElementDot";
 
 interface HeatmapChartProps {
   roots: ComboTreeNode[];
+  /** Highlight cells containing ⭐ recommended routes (plan data mode). */
+  highlight?: boolean;
 }
 
 interface CellData {
@@ -21,7 +23,8 @@ interface CellData {
 }
 
 /** Matrix heatmap: rows = stage 1, columns = stage 2, intensity = route quality. */
-export default function HeatmapChart({ roots }: HeatmapChartProps) {
+export default function HeatmapChart({ roots, highlight = false }: HeatmapChartProps) {
+  const { t } = useTranslation();
   const scale = useResponsiveScale();
 
   const cells = useMemo(() => {
@@ -58,15 +61,44 @@ export default function HeatmapChart({ roots }: HeatmapChartProps) {
           minWidth: 620 * scale,
         }}
       >
-        {/* Corner + column headers */}
-        <Box />
+        {/* Corner: explains which axis each stage maps to */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{ fontSize: 10, lineHeight: 1.3, fontWeight: 700 }}
+            noWrap
+          >
+            {t("routes.stage1")} ↓
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ fontSize: 10, lineHeight: 1.3, fontWeight: 700 }}
+            noWrap
+          >
+            {t("routes.stage2")} →
+          </Typography>
+        </Box>
         {ELEMENT_IDS.map((element) => (
           <ColumnHeader key={element} element={element} />
         ))}
 
         {/* Rows */}
         {ELEMENT_IDS.map((stage1) => (
-          <Row key={stage1} stage1={stage1} cells={cells} maxCount={maxCount} />
+          <Row
+            key={stage1}
+            stage1={stage1}
+            cells={cells}
+            maxCount={maxCount}
+            highlight={highlight}
+          />
         ))}
       </Box>
     </Paper>
@@ -90,10 +122,12 @@ function Row({
   stage1,
   cells,
   maxCount,
+  highlight,
 }: {
   stage1: ElementId;
   cells: Map<string, CellData>;
   maxCount: number;
+  highlight: boolean;
 }) {
   const { t } = useTranslation();
   const scale = useResponsiveScale();
@@ -108,7 +142,14 @@ function Row({
       {ELEMENT_IDS.map((stage2) => {
         const cell = cells.get(`${stage1}-${stage2}`);
         return (
-          <Cell key={stage2} cell={cell} maxCount={maxCount} stage1={stage1} stage2={stage2} />
+          <Cell
+            key={stage2}
+            cell={cell}
+            maxCount={maxCount}
+            stage1={stage1}
+            stage2={stage2}
+            highlight={highlight}
+          />
         );
       })}
     </>
@@ -120,11 +161,13 @@ function Cell({
   maxCount,
   stage1,
   stage2,
+  highlight,
 }: {
   cell: CellData | undefined;
   maxCount: number;
   stage1: ElementId;
   stage2: ElementId;
+  highlight: boolean;
 }) {
   const { t } = useTranslation();
   const scale = useResponsiveScale();
@@ -155,8 +198,7 @@ function Cell({
   const tooltipLines = [
     `${t(`elements.${stage1}`)} → ${t(`elements.${stage2}`)} · ${cell.count}`,
     ...cell.leaves.map(
-      (leaf) =>
-        `${t(`elements.${leaf.element}`)}${leaf.recommended ? " ⭐" : ""}${leaf.assignment?.optimal ? " ✔" : ""}`,
+      (leaf) => `${t(`elements.${leaf.element}`)}${leaf.assignment?.optimal ? " ✔" : ""}`,
     ),
   ].join("\n");
 
@@ -166,8 +208,8 @@ function Cell({
         sx={{
           minHeight: 52 * scale,
           borderRadius: 1,
-          border: cell.recommendedCount > 0 ? 1.5 : 1,
-          borderColor: cell.recommendedCount > 0 ? "warning.main" : "divider",
+          border: highlight && cell.recommendedCount > 0 ? 1.5 : 1,
+          borderColor: highlight && cell.recommendedCount > 0 ? "warning.main" : "divider",
           bgcolor: `color-mix(in srgb, var(--mui-palette-primary-main) ${Math.round(
             8 + intensity * 22,
           )}%, transparent)`,
@@ -184,9 +226,6 @@ function Cell({
             <ElementDot key={leaf.element} element={leaf.element} size={12 * scale} />
           ))}
         </Box>
-        <Typography variant="caption" sx={{ fontWeight: 700 }}>
-          {cell.count}
-        </Typography>
       </Box>
     </Tooltip>
   );

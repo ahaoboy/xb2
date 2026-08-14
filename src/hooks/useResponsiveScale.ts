@@ -1,14 +1,10 @@
-import { useMediaQuery } from "@mui/material";
+import { useSettingsStore } from "../store/settingsStore";
 
 /**
- * Scales UI and charts up on large screens so content stays readable.
- * - 1440px+: 1.15×
- * - 1920px+: 1.3×
- * - 4K (2560px+): 1.5×
+ * Returns the user-adjustable UI scale (1 = default). The scale is set from
+ * the header slider and drives the root font size plus chart layouts, so
+ * users can tune everything to their screen.
  */
 export function useResponsiveScale(): number {
-  const uhd = useMediaQuery("(min-width: 2560px)");
-  const xl = useMediaQuery("(min-width: 1920px)");
-  const lg = useMediaQuery("(min-width: 1440px)");
-  return uhd ? 1.5 : xl ? 1.3 : lg ? 1.15 : 1;
+  return useSettingsStore((state) => state.uiScale);
 }

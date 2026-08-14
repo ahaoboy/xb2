@@ -4,6 +4,10 @@ export default {
     sourceCode: "View source code on GitHub",
     view: "Page",
     viewPlanner: "Plan",
+    usePlanData: "Use plan data",
+    scale: "UI scale",
+    scaleDecrease: "Decrease UI scale",
+    scaleIncrease: "Increase UI scale",
   },
   common: {
     all: "All",

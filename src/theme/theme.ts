@@ -6,7 +6,12 @@ import { extendTheme } from "@mui/material/styles";
  * best practice); the active scheme is controlled by CssVarsProvider.
  */
 export const appTheme = extendTheme({
-  colorSchemeSelector: "class",
+  // "data" selector: theme mode is applied via [data-mui-color-scheme] on
+  // <html>, so the header toggle works. Do NOT use "class" — React Flow's
+  // canvas container has a `light`/`dark` class that would match MUI's
+  // `.light` rule and pin every CSS variable inside the canvas to the light
+  // values, breaking dark mode inside the trees.
+  colorSchemeSelector: "data",
   colorSchemes: {
     light: {
       palette: {

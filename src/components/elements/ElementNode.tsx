@@ -10,10 +10,17 @@ interface ElementNodeProps {
   size?: number;
   /** Optional content appended after the element label. */
   children?: ReactNode;
+  /** Mirrored pill: content flows right-to-left (dot on the right). */
+  mirrored?: boolean;
 }
 
 /** A mermaid-style colored element pill with icon and localized label. */
-export default function ElementNode({ element, size = 16, children }: ElementNodeProps) {
+export default function ElementNode({
+  element,
+  size = 16,
+  children,
+  mirrored = false,
+}: ElementNodeProps) {
   const { t } = useTranslation();
   const meta = ELEMENT_META[element];
 
@@ -30,6 +37,7 @@ export default function ElementNode({ element, size = 16, children }: ElementNod
         color: meta.textColor,
         boxShadow: 1,
         whiteSpace: "nowrap",
+        flexDirection: mirrored ? "row-reverse" : "row",
       }}
     >
       <ElementDot element={element} size={size} />

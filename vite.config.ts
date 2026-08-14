@@ -26,6 +26,7 @@ export default defineConfig({
           i18next: "https://esm.sh/i18next",
           zustand: "https://esm.sh/zustand",
           mermaid: "https://esm.sh/mermaid",
+          "@xyflow/react": "https://esm.sh/@xyflow/react",
           "@mui/material": "https://esm.sh/@mui/material?standalone",
           "@mui/styled-engine": "https://esm.sh/@mui/styled-engine?standalone",
           "@emotion/react": "https://esm.sh/@emotion/react",

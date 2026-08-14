@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { Box, Grid, Paper, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Grid, Paper, Stack, Tooltip } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useTranslation } from "react-i18next";
 import { COMBO_ATTACKS, pickLocalized } from "../../../data/comboAttacks";
 import { useResponsiveScale } from "../../../hooks/useResponsiveScale";
@@ -26,6 +27,8 @@ function RouteArrow({ back = false, scale = 1 }: { back?: boolean; scale?: numbe
 
 interface Stage3ChartProps {
   roots: ComboTreeNode[];
+  /** Show ⭐/✔ markers on routes (plan data mode). */
+  showMarkers?: boolean;
 }
 
 interface RouteLine {
@@ -35,6 +38,8 @@ interface RouteLine {
   attackName: string;
   /** Damage multiplier; undefined when the attack data is unavailable. */
   direct: number | null;
+  recommended?: boolean;
+  optimal?: boolean;
 }
 
 /**
@@ -54,7 +59,7 @@ const COUNTER_PAIRS: [ElementId, ElementId][] = [
  * mutually countering elements in a symmetric left/right layout, so all 8
  * groups fit on one screen.
  */
-export default function Stage3Chart({ roots }: Stage3ChartProps) {
+export default function Stage3Chart({ roots, showMarkers = false }: Stage3ChartProps) {
   const { t } = useTranslation();
   const lang = useCurrentLanguage();
   const scale = useResponsiveScale();
@@ -72,6 +77,8 @@ export default function Stage3Chart({ roots }: Stage3ChartProps) {
             stage3: leaf.element,
             attackName: attack ? pickLocalized(attack.name, lang) : "",
             direct: attack?.direct ?? null,
+            recommended: leaf.recommended,
+            optimal: leaf.assignment?.optimal,
           };
           const list = map.get(leaf.element) ?? [];
           list.push(line);
@@ -88,11 +95,24 @@ export default function Stage3Chart({ roots }: Stage3ChartProps) {
         <Grid key={`${left}-${right}`} container spacing={1}>
           {/* Left card: mirrored (stage 3 ← stage 2 ← stage 1), right-aligned. */}
           <Grid size={6}>
-            <TargetCard target={left} lines={groups.get(left) ?? []} t={t} scale={scale} mirrored />
+            <TargetCard
+              target={left}
+              lines={groups.get(left) ?? []}
+              t={t}
+              scale={scale}
+              mirrored
+              showMarkers={showMarkers}
+            />
           </Grid>
           {/* Right card: forward order (stage 1 → stage 2 → stage 3). */}
           <Grid size={6}>
-            <TargetCard target={right} lines={groups.get(right) ?? []} t={t} scale={scale} />
+            <TargetCard
+              target={right}
+              lines={groups.get(right) ?? []}
+              t={t}
+              scale={scale}
+              showMarkers={showMarkers}
+            />
           </Grid>
         </Grid>
       ))}
@@ -106,6 +126,7 @@ function TargetCard({
   t,
   scale = 1,
   mirrored = false,
+  showMarkers = false,
 }: {
   target: ElementId;
   lines: RouteLine[];
@@ -113,56 +134,64 @@ function TargetCard({
   scale?: number;
   /** When true, routes render in reverse with left arrows, right-aligned. */
   mirrored?: boolean;
+  /** Show ⭐/✔ markers next to the route end. */
+  showMarkers?: boolean;
 }) {
+  const markers = (line: RouteLine) =>
+    showMarkers ? (
+      <>{line.optimal ? <CheckCircleIcon fontSize="small" color="success" /> : null}</>
+    ) : null;
+
+  // No routes: keep an empty placeholder card so the pair stays symmetric.
+  if (lines.length === 0) {
+    return <Paper variant="outlined" sx={{ p: 1, height: "100%", opacity: 0.4 }} />;
+  }
+
   return (
     <Paper variant="outlined" sx={{ p: 1, height: "100%" }}>
       <Box sx={{ mb: 0.75, display: "flex", justifyContent: mirrored ? "flex-end" : "flex-start" }}>
-        <ElementNode element={target} size={14 * scale} />
+        <ElementNode element={target} size={14 * scale} mirrored={mirrored} />
       </Box>
-      {lines.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {t("routes.charts.noRoutes")}
-        </Typography>
-      ) : (
-        <Stack spacing={0.5}>
-          {lines.map((line, index) => (
-            <Tooltip
-              key={`${line.stage1}-${line.stage2}-${index}`}
-              title={
-                line.attackName ? `${line.attackName} · ${line.direct}%` : t("routes.charts.noData")
-              }
+      <Stack spacing={0.5}>
+        {lines.map((line, index) => (
+          <Tooltip
+            key={`${line.stage1}-${line.stage2}-${index}`}
+            title={
+              line.attackName ? `${line.attackName} · ${line.direct}%` : t("routes.charts.noData")
+            }
+          >
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{
+                alignItems: "center",
+                cursor: "help",
+                justifyContent: mirrored ? "flex-end" : "flex-start",
+              }}
             >
-              <Stack
-                direction="row"
-                spacing={0.5}
-                sx={{
-                  alignItems: "center",
-                  cursor: "help",
-                  justifyContent: mirrored ? "flex-end" : "flex-start",
-                }}
-              >
-                {mirrored ? (
-                  <>
-                    <ElementNode element={line.stage3} size={11 * scale} />
-                    <RouteArrow back scale={scale} />
-                    <ElementNode element={line.stage2} size={11 * scale} />
-                    <RouteArrow back scale={scale} />
-                    <ElementNode element={line.stage1} size={11 * scale} />
-                  </>
-                ) : (
-                  <>
-                    <ElementNode element={line.stage1} size={11 * scale} />
-                    <RouteArrow scale={scale} />
-                    <ElementNode element={line.stage2} size={11 * scale} />
-                    <RouteArrow scale={scale} />
-                    <ElementNode element={line.stage3} size={11 * scale} />
-                  </>
-                )}
-              </Stack>
-            </Tooltip>
-          ))}
-        </Stack>
-      )}
+              {mirrored ? (
+                <>
+                  {markers(line)}
+                  <ElementNode element={line.stage3} size={11 * scale} mirrored />
+                  <RouteArrow back scale={scale} />
+                  <ElementNode element={line.stage2} size={11 * scale} mirrored />
+                  <RouteArrow back scale={scale} />
+                  <ElementNode element={line.stage1} size={11 * scale} mirrored />
+                </>
+              ) : (
+                <>
+                  <ElementNode element={line.stage1} size={11 * scale} />
+                  <RouteArrow scale={scale} />
+                  <ElementNode element={line.stage2} size={11 * scale} />
+                  <RouteArrow scale={scale} />
+                  <ElementNode element={line.stage3} size={11 * scale} />
+                  {markers(line)}
+                </>
+              )}
+            </Stack>
+          </Tooltip>
+        ))}
+      </Stack>
     </Paper>
   );
 }

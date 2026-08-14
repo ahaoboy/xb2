@@ -4,6 +4,10 @@ export default {
     sourceCode: "在 GitHub 查看源代码",
     view: "页面",
     viewPlanner: "规划",
+    usePlanData: "图表使用规划数据",
+    scale: "界面缩放",
+    scaleDecrease: "减小界面缩放",
+    scaleIncrease: "增大界面缩放",
   },
   common: {
     all: "全部",
