@@ -54,6 +54,9 @@ function TreePillNode({ data }: NodeProps) {
               width: "100%",
               height: "100%",
               whiteSpace: "nowrap",
+              // Mirrored trees read right-to-left: the check sits on the far
+              // left, the text flows to the right of it.
+              flexDirection: mirrored ? "row-reverse" : "row",
               // Border adapts to the theme: divider is light in dark mode
               // and dark in light mode, keeping the node visible on both.
               borderRadius: 1,
