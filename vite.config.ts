@@ -20,17 +20,19 @@ export default defineConfig({
     alias: isDev
       ? {}
       : {
-          react: "https://esm.sh/react",
-          "react-dom": "https://esm.sh/react-dom",
-          "react-i18next": "https://esm.sh/react-i18next",
-          i18next: "https://esm.sh/i18next",
-          zustand: "https://esm.sh/zustand",
-          mermaid: "https://esm.sh/mermaid",
-          "@xyflow/react": "https://esm.sh/@xyflow/react",
-          "@mui/material": "https://esm.sh/@mui/material?standalone",
-          "@mui/styled-engine": "https://esm.sh/@mui/styled-engine?standalone",
-          "@emotion/react": "https://esm.sh/@emotion/react",
-          "@emotion/styled": "https://esm.sh/@emotion/styled",
-        },
+        react: "https://esm.sh/react",
+        "react-dom": "https://esm.sh/react-dom",
+        "react-i18next": "https://esm.sh/react-i18next",
+        i18next: "https://esm.sh/i18next",
+        zustand: "https://esm.sh/zustand",
+        mermaid: "https://esm.sh/mermaid",
+        // style.css:1
+        // Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/css". Strict MIME type checking is enforced for module scripts per HTML spec. "@xyflow/react": "https://esm.sh/@xyflow/react",
+        // "@xyflow/react": "https://esm.sh/@xyflow/react",
+        "@mui/material": "https://esm.sh/@mui/material?standalone",
+        "@mui/styled-engine": "https://esm.sh/@mui/styled-engine?standalone",
+        "@emotion/react": "https://esm.sh/@emotion/react",
+        "@emotion/styled": "https://esm.sh/@emotion/styled",
+      },
   },
 });
